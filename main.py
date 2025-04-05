@@ -1,5 +1,5 @@
 from user_management import register_user, login_user
-from admin_management import add_room, view_rooms
+from admin_management import add_room, view_rooms,remove_user
 from customer_management import view_available_rooms, book_room, checkout_room, view_active_bookings, view_booking_history
 
 def main():
@@ -28,7 +28,8 @@ def main():
                 print("\nAdmin Menu")
                 print("1. Add Room")
                 print("2. View Rooms")
-                print("3. Logout")
+                print("3. Remove a User")  # Add this in Admin Menu
+                print("4. Logout")
                 choice = input("Enter choice: ")
                 if choice == "1":
                     room_type = input("Enter room type: ")
@@ -37,6 +38,8 @@ def main():
                 elif choice == "2":
                     view_rooms()
                 elif choice == "3":
+                    remove_user()
+                elif choice == "4":
                     print("Logging out...")
                     break
         elif role == "customer":
@@ -44,20 +47,20 @@ def main():
                 print("\nCustomer Menu")
                 print("1. View Available Rooms")
                 print("2. Book a Room")
-                print("3. Check Out")
-                print("4. View Active Bookings")
-                print("5. View Booking History")
+                print("3. View Active Bookings")
+                print("4. View Booking History")
+                print("5. Check Out")
                 print("6. Logout")
                 choice = input("Enter choice: ")
                 if choice == "1":
                     view_available_rooms()
                 elif choice == "2":
                     book_room(user_id)
-                elif choice == "3":
-                    checkout_room(user_id)
-                elif choice == "4":
-                    view_active_bookings(user_id)
                 elif choice == "5":
+                    checkout_room(user_id)
+                elif choice == "3":
+                    view_active_bookings(user_id)
+                elif choice == "4":
                     view_booking_history(user_id)
                 elif choice == "6":
                     print("Logging out...")
