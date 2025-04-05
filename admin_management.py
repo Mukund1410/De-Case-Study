@@ -11,27 +11,25 @@ def add_room(room_type, price):
     conn.close()
     print(f"Room of type {room_type} added successfully!")
 
-from db_connection import connect_db
+def view_customers():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, email FROM users WHERE role = 'customer'")
+    customers = cursor.fetchall()
+    conn.close()
+    return customers
 
-def remove_user(email):
+def remove_customer(user_id):
     conn = connect_db()
     cursor = conn.cursor()
 
-    try:
-        # First, check if the user exists
-        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
+    # Remove user's bookings and payments first due to foreign key constraints
+    cursor.execute("DELETE FROM payments WHERE user_id = %s", (user_id,))
+    cursor.execute("DELETE FROM bookings WHERE user_id = %s", (user_id,))
+    cursor.execute("DELETE FROM users WHERE id = %s AND role = 'customer'", (user_id,))
 
-        if user:
-            cursor.execute("DELETE FROM users WHERE email = %s", (email,))
-            conn.commit()
-            print(f"User with email {email} has been removed.")
-        else:
-            print("User not found.")
-    except Exception as e:
-        print("Error while removing user:", e)
-    finally:
-        conn.close()
+    conn.commit()
+    conn.close()
 
 def view_rooms():
     conn = connect_db()

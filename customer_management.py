@@ -4,7 +4,7 @@ from datetime import datetime
 def view_available_rooms():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, room_type, price FROM rooms WHERE available = TRUE")
+    cursor.execute("SELECT id, room_type, price FROM rooms WHERE is_available = TRUE")
     rooms = cursor.fetchall()
     conn.close()
 
@@ -20,27 +20,34 @@ def book_room(user_id):
     conn = connect_db()
     cursor = conn.cursor()
 
-    room_type = input("Enter room type (single/double/suite): ").strip().lower()
-    cursor.execute("SELECT id FROM rooms WHERE room_type = %s AND available = TRUE LIMIT 1", (room_type,))
+    room_type = input("Enter room type (single/double/suite): ").lower()
+    cursor.execute("SELECT id FROM rooms WHERE room_type = %s AND is_available = TRUE LIMIT 1", (room_type,))
     room = cursor.fetchone()
 
-    if not room:
+    if room:
+        room_id = room[0]
+
+        # Fetch user's name from users table
+        cursor.execute("SELECT name FROM users WHERE id = %s", (user_id,))
+        result = cursor.fetchone()
+        user_name = result[0] if result else None
+
+        if user_name:
+            cursor.execute("""
+                INSERT INTO bookings (user_id, room_type, check_in, room_id, user_name)
+                VALUES (%s, %s, CURDATE(), %s, %s)
+            """, (user_id, room_type, room_id, user_name))
+            
+            cursor.execute("UPDATE rooms SET is_available = FALSE WHERE id = %s", (room_id,))
+            conn.commit()
+
+            print(f"{room_type.capitalize()} room booked successfully! Room ID: {room_id}")
+        else:
+            print("User not found.")
+    else:
         print("No available room of that type.")
-        conn.close()
-        return
 
-    room_id = room[0]
-    checkin_datetime = datetime.now()
-
-    cursor.execute("""
-        INSERT INTO bookings (user_id, room_type, check_in, room_id)
-        VALUES (%s, %s, %s, %s)
-    """, (user_id, room_type, checkin_datetime, room_id))
-
-    cursor.execute("UPDATE rooms SET available = FALSE WHERE id = %s", (room_id,))
-    conn.commit()
-
-    print(f"Room booked successfully! Your Room ID is: {room_id}")
+    cursor.close()
     conn.close()
     
     
@@ -63,7 +70,8 @@ def checkout_room(user_id):
 
     booking_id, room_type, checkin = booking
     now = datetime.now()
-    duration_days = (now.date() - checkin.date()).days or 1
+    duration_days = (now.date() - checkin).days or 1
+
 
     if room_type == "single":
         rate = 1000
@@ -89,7 +97,7 @@ def checkout_room(user_id):
             INSERT INTO payments (booking_id, user_id, amount, status)
             VALUES (%s, %s, %s, %s)
         """, (booking_id, user_id, total_price, "paid"))
-        cursor.execute("UPDATE rooms SET available = TRUE WHERE id = %s", (room_id,))
+        cursor.execute("UPDATE rooms SET is_available = TRUE WHERE id = %s", (room_id,))
         conn.commit()
         print("Checked out and payment done.")
     else:

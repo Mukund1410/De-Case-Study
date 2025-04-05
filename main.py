@@ -1,5 +1,5 @@
 from user_management import register_user, login_user
-from admin_management import add_room, view_rooms,remove_user
+from admin_management import add_room, view_rooms,view_customers,remove_customer
 from customer_management import view_available_rooms, book_room, checkout_room, view_active_bookings, view_booking_history
 
 def main():
@@ -38,7 +38,21 @@ def main():
                 elif choice == "2":
                     view_rooms()
                 elif choice == "3":
-                    remove_user()
+                    customers = view_customers()
+                    if not customers:
+                        print("No customers found.")
+                    else:
+                        print("\nCustomer List:")
+                        for cust in customers:
+                            print(f"ID: {cust[0]} | Name: {cust[1]} | Email: {cust[2]}")
+
+                        try:
+                            user_id = int(input("Enter the ID of the customer to remove (or 0 to cancel): "))
+                            if user_id != 0:
+                                remove_customer(user_id)
+                                print("Customer removed successfully.")
+                        except ValueError:
+                            print("Invalid ID input.")
                 elif choice == "4":
                     print("Logging out...")
                     break
